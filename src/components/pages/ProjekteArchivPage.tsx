@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { PageHeader } from '../PageHeader';
-import { AKP_DATA, ProjectItem } from '../../data/akp-data';
+import { AKP_DATA } from '../../data/akp-data';
 
 interface ProjekteArchivPageProps {
   openProject: (projectId: string) => void;
