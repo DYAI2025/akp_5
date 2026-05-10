@@ -229,11 +229,43 @@ export const MagazineStage: React.FC = () => {
   }
 
   useEffect(() => {
+    function isEditableTarget(target: EventTarget | null) {
+      if (!(target instanceof HTMLElement)) return false;
+      const tagName = target.tagName.toLowerCase();
+      return (
+        target.isContentEditable ||
+        tagName === 'input' ||
+        tagName === 'textarea' ||
+        tagName === 'select'
+      );
+    }
+
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'ArrowRight' || event.key === 'PageDown') goToIndex(activeIndex + 1);
-      if (event.key === 'ArrowLeft' || event.key === 'PageUp') goToIndex(activeIndex - 1);
-      if (event.key === 'Home') goToIndex(0);
-      if (event.key === 'End') goToIndex(lastPageIndex);
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isEditableTarget(event.target)) return;
+
+      switch (event.key) {
+        case 'ArrowRight':
+        case 'PageDown':
+          event.preventDefault();
+          goToIndex(activeIndex + 1);
+          break;
+        case 'ArrowLeft':
+        case 'PageUp':
+          event.preventDefault();
+          goToIndex(activeIndex - 1);
+          break;
+        case 'Home':
+          event.preventDefault();
+          goToIndex(0);
+          break;
+        case 'End':
+          event.preventDefault();
+          goToIndex(lastPageIndex);
+          break;
+        default:
+          break;
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown);
