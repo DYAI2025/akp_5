@@ -62,7 +62,8 @@ describe('Atlas data integrity', () => {
     const bueroImages = [...read('src/components/pages/BueroPage.tsx').matchAll(/src="(\/assets\/[^"]+)"/g)].map((match) => match[1]);
 
     for (const assetPath of [...imagePaths, ...componentImages, ...bueroImages]) {
-      assert.equal(existsSync(join(root, 'public', assetPath)), true, `Missing ${assetPath}`);
+      const relativeAssetPath = assetPath.replace(/^\/+/, '');
+      assert.equal(existsSync(join(root, 'public', relativeAssetPath)), true, `Missing ${assetPath}`);
     }
   });
 });
