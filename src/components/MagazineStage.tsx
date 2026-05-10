@@ -214,12 +214,11 @@ export const MagazineStage: React.FC = () => {
 
   function go(id: string) {
     if (id === 'back') {
-      setHistory((prev) => {
-        if (prev.length <= 1) return prev;
-        const nextHistory = prev.slice(0, -1);
-        setActivePageId(nextHistory[nextHistory.length - 1]);
-        return nextHistory;
-      });
+      if (history.length <= 1) return;
+      const nextHistory = history.slice(0, -1);
+      const nextActiveId = nextHistory[nextHistory.length - 1];
+      setHistory(nextHistory);
+      setActivePageId(nextActiveId);
       return;
     }
 
