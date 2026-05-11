@@ -5,15 +5,15 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start -H 0.0.0.0",
+    "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
     "typecheck": "tsc --noEmit",
     "test:ci": "node --test tests/*.test.mjs",
     "ci": "npm run test:ci && npm run typecheck && npm run build"
   },
   "dependencies": {
-    "next": "^15.0.7",
-    "react": "19.0.0-rc-66a32d31-20241107",
-    "react-dom": "19.0.0-rc-66a32d31-20241107"
+    "next": "15.0.7",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
   },
   "devDependencies": {
     "@types/node": "^20",

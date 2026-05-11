@@ -34,6 +34,16 @@ describe('Railway deployment contract', () => {
     assert.match(pkg.scripts.start, /next start/);
     assert.match(pkg.scripts.start, /0\.0\.0\.0/);
     assert.match(pkg.scripts.start, /PORT/);
+    assert.match(pkg.scripts.start, /\$\{PORT:-3000\}/);
+  });
+
+  it('pins installable production dependencies instead of drifting to incompatible RC peers', () => {
+    const pkg = JSON.parse(read('package.json'));
+
+    assert.equal(pkg.engines.node, '20.x');
+    assert.equal(pkg.dependencies.next, '15.0.7');
+    assert.equal(pkg.dependencies.react, '19.0.0');
+    assert.equal(pkg.dependencies['react-dom'], '19.0.0');
   });
 
   it('keeps global CSS in the App Router root layout', () => {
@@ -68,6 +78,19 @@ describe('Atlas data integrity', () => {
   });
 });
 
+describe('CI deployment coverage', () => {
+  it('runs static tests, typechecking, build, and a production health smoke test', () => {
+    const workflow = read('.github/workflows/ci.yml');
+
+    assert.match(workflow, /npm run test:ci/);
+    assert.match(workflow, /npm run typecheck/);
+    assert.match(workflow, /npm run build/);
+    assert.match(workflow, /npm run start/);
+    assert.match(workflow, /curl --fail/);
+    assert.match(workflow, /http:\/\/127\.0\.0\.1:3000\/health/);
+  });
+});
+
 describe('Frontend navigation coverage', () => {
   it('renders every configured atlas page and guards unknown navigation IDs', () => {
     const stage = read('src/components/MagazineStage.tsx');
@@ -84,5 +107,7 @@ describe('Frontend navigation coverage', () => {
     assert.match(css, /@media \(max-width: 720px\)/);
     assert.match(css, /html, body \{ overflow: auto; \}/);
     assert.match(css, /\.page \{ overflow-y: auto; \}/);
+    assert.match(css, /\.page-grid \{ position: relative; min-height: calc\(100vh - 96px\); \}/);
+    assert.match(read('src/components/MagazineStage.tsx'), /matchMedia\('\(max-width: 720px\)'\)\.matches/);
   });
 });
