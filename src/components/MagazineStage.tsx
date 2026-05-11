@@ -273,6 +273,7 @@ export const MagazineStage: React.FC = () => {
   }, [activeIndex, goToIndex, lastPageIndex]);
 
   const handleWheel = (event: React.WheelEvent<HTMLElement>) => {
+    if (window.matchMedia('(max-width: 720px)').matches) return;
     if (Math.abs(event.deltaY) < 25 || wheelLock.current) return;
     wheelLock.current = true;
     goToIndex(activeIndex + (event.deltaY > 0 ? 1 : -1));

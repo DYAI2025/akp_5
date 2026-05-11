@@ -24,3 +24,19 @@ jobs:
         run: npm run typecheck
       - name: Production build
         run: npm run build
+      - name: Production smoke test
+        env:
+          PORT: 3000
+        run: |
+          npm run start > /tmp/akp-next.log 2>&1 &
+          server_pid=$!
+          trap 'kill $server_pid' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000/health > /tmp/akp-health.json; then
+              cat /tmp/akp-health.json
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/akp-next.log
+          exit 1
