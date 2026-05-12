@@ -16,6 +16,8 @@ type AtlasPage = {
   render: React.ReactNode;
 };
 
+type TurnDirection = 'forward' | 'backward' | null;
+
 const pageMetaById = new Map(AKP_DATA.pages.map((page) => [page.id, page]));
 
 function ProjectList({ projects }: { projects: ProjectItem[] }) {
@@ -191,7 +193,9 @@ function StandardAtlasPage({ meta }: { meta: PageMetadata }) {
 export const MagazineStage: React.FC = () => {
   const [activePageId, setActivePageId] = useState<PageId>('cover');
   const [history, setHistory] = useState<PageId[]>(['cover']);
+  const [turnDirection, setTurnDirection] = useState<TurnDirection>(null);
   const wheelLock = useRef(false);
+  const turnResetTimer = useRef<number | null>(null);
 
   const pages: AtlasPage[] = AKP_DATA.pages.map((meta) => {
     if (meta.id === 'cover') return { id: meta.id, render: <CoverPage go={go} /> };
@@ -205,18 +209,35 @@ export const MagazineStage: React.FC = () => {
   const activeIndex = Math.max(0, pages.findIndex((page) => page.id === activePageId));
   const lastPageIndex = pages.length - 1;
 
+  const startPageTurn = useCallback((nextIndex: number) => {
+    if (nextIndex === activeIndex) return;
+    setTurnDirection(nextIndex > activeIndex ? 'forward' : 'backward');
+
+    if (turnResetTimer.current !== null) {
+      window.clearTimeout(turnResetTimer.current);
+    }
+
+    turnResetTimer.current = window.setTimeout(() => {
+      setTurnDirection(null);
+      turnResetTimer.current = null;
+    }, 1180);
+  }, [activeIndex]);
+
   const goToIndex = useCallback((nextIndex: number) => {
     const boundedIndex = Math.min(Math.max(nextIndex, 0), lastPageIndex);
     const nextId = pages[boundedIndex].id;
+    startPageTurn(boundedIndex);
     setHistory((prev) => prev[prev.length - 1] === nextId ? prev : [...prev, nextId]);
     setActivePageId(nextId);
-  }, [lastPageIndex, pages]);
+  }, [lastPageIndex, pages, startPageTurn]);
 
   function go(id: string) {
     if (id === 'back') {
       if (history.length <= 1) return;
       const nextHistory = history.slice(0, -1);
       const nextActiveId = nextHistory[nextHistory.length - 1];
+      const nextIndex = pages.findIndex((page) => page.id === nextActiveId);
+      startPageTurn(nextIndex);
       setHistory(nextHistory);
       setActivePageId(nextActiveId);
       return;
@@ -224,6 +245,8 @@ export const MagazineStage: React.FC = () => {
 
     if (!pageMetaById.has(id)) return;
     const nextId = id as PageId;
+    const nextIndex = pages.findIndex((page) => page.id === nextId);
+    startPageTurn(nextIndex);
     setHistory((prev) => prev[prev.length - 1] === nextId ? prev : [...prev, nextId]);
     setActivePageId(nextId);
   }
@@ -272,6 +295,14 @@ export const MagazineStage: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeIndex, goToIndex, lastPageIndex]);
 
+  useEffect(() => {
+    return () => {
+      if (turnResetTimer.current !== null) {
+        window.clearTimeout(turnResetTimer.current);
+      }
+    };
+  }, []);
+
   const handleWheel = (event: React.WheelEvent<HTMLElement>) => {
     if (window.matchMedia('(max-width: 720px)').matches) return;
     if (Math.abs(event.deltaY) < 25 || wheelLock.current) return;
@@ -281,14 +312,22 @@ export const MagazineStage: React.FC = () => {
   };
 
   const getPageClass = (index: number) => {
-    if (index === activeIndex) return 'is-active';
-    if (index < activeIndex) return 'is-prev';
-    if (index > activeIndex) return 'is-next';
-    return 'is-far';
+    const distance = index - activeIndex;
+    const classes = [];
+
+    if (distance === 0) classes.push('is-active');
+    else if (distance < 0) classes.push('is-prev');
+    else classes.push('is-next');
+
+    if (distance === -1) classes.push('is-adjacent-prev');
+    if (distance === 1) classes.push('is-adjacent-next');
+    if (Math.abs(distance) > 1) classes.push('is-far');
+
+    return classes.join(' ');
   };
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${turnDirection ? `is-turning-${turnDirection}` : ''}`}>
       <div className="display-frame">
         <div className="display-corner tl" />
         <div className="display-corner tr" />
@@ -309,13 +348,17 @@ export const MagazineStage: React.FC = () => {
         </div>
       </div>
 
-      <main className="magazine-stage" onWheel={handleWheel} aria-live="polite">
+      <main className="magazine-stage" onWheel={handleWheel} aria-live="polite" aria-label="Digitaler AKP Magazin-Atlas">
         {pages.map((page, index) => (
           <section
             key={page.id}
             className={`page ${getPageClass(index)} ${page.id === 'cover' ? 'is-cover' : ''}`}
             aria-hidden={index !== activeIndex}
+            aria-label={`Seite ${index} von ${lastPageIndex}: ${pageMetaById.get(page.id)?.title ?? page.id}`}
+            data-page-num={String(index).padStart(2, '0')}
           >
+            <span className="page-turn-shadow" aria-hidden="true" />
+            <span className="page-curl" aria-hidden="true" />
             {page.render}
           </section>
         ))}
@@ -333,6 +376,8 @@ export const MagazineStage: React.FC = () => {
           <div className="fill" style={{ width: `${(activeIndex / lastPageIndex) * 100}%` }} />
         </div>
         <div className="group">
+          <button onClick={() => goToIndex(activeIndex - 1)} disabled={activeIndex === 0}>← Vorherige</button>
+          <button onClick={() => goToIndex(activeIndex + 1)} disabled={activeIndex === lastPageIndex} className="primary">Nächste →</button>
           {history.length > 1 && <button onClick={() => go('back')}>Zurück</button>}
           <button onClick={() => go('cover')} className={activePageId === 'cover' ? 'primary' : ''}>Cover</button>
         </div>
