@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "node -e \"const { spawnSync } = require('child_process'); const port = process.env.PORT || '3000'; const cmd = process.platform === 'win32' ? 'npx.cmd' : 'npx'; const result = spawnSync(cmd, ['next', 'start', '-H', '0.0.0.0', '-p', port], { stdio: 'inherit' }); process.exit(result.status ?? 1);\"",
+    "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
     "typecheck": "tsc --noEmit",
     "test:ci": "node --test tests/*.test.mjs",
     "ci": "npm run test:ci && npm run typecheck && npm run build"
