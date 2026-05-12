@@ -354,8 +354,8 @@ export const MagazineStage: React.FC = () => {
             key={page.id}
             className={`page ${getPageClass(index)} ${page.id === 'cover' ? 'is-cover' : ''}`}
             aria-hidden={index !== activeIndex}
-            aria-label={`Seite ${index} von ${lastPageIndex}: ${pageMetaById.get(page.id)?.title ?? page.id}`}
-            data-page-num={String(index).padStart(2, '0')}
+            aria-label={`Seite ${index + 1} von ${lastPageIndex + 1}: ${pageMetaById.get(page.id)?.title ?? page.id}`}
+            data-page-num={String(index + 1).padStart(2, '0')}
           >
             <span className="page-turn-shadow" aria-hidden="true" />
             <span className="page-curl" aria-hidden="true" />
