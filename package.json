@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
+    "start": "node -e \"const port = process.env.PORT || '3000'; process.argv = ['node', 'next', 'start', '-H', '0.0.0.0', '-p', port]; require('./node_modules/next/dist/bin/next');\"",
     "typecheck": "tsc --noEmit",
     "test:ci": "node --test tests/*.test.mjs",
     "ci": "npm run test:ci && npm run typecheck && npm run build"
