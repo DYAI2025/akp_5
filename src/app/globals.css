@@ -111,9 +111,22 @@ button:focus-visible, a:focus-visible {
 .magazine-stage {
   position: absolute;
   inset: 64px 56px 56px 56px;
-  perspective: 2200px;
+  perspective: 2400px;
   transform-style: preserve-3d;
   z-index: 2;
+}
+
+.magazine-stage::before {
+  content: "";
+  position: absolute;
+  inset: 2% 49.8% 2% auto;
+  width: 28px;
+  transform: translateX(50%);
+  background: linear-gradient(90deg, transparent, rgba(27, 24, 18, 0.16), transparent);
+  filter: blur(10px);
+  opacity: 0.32;
+  pointer-events: none;
+  z-index: 12;
 }
 
 .page {
@@ -127,15 +140,42 @@ button:focus-visible, a:focus-visible {
   backface-visibility: hidden;
   transform-origin: 0% 50%;
   transition:
-    transform 1100ms cubic-bezier(0.19, 1, 0.22, 1),
+    transform 1180ms cubic-bezier(0.16, 1, 0.3, 1),
     opacity 850ms cubic-bezier(0.19, 1, 0.22, 1),
-    filter 700ms ease;
+    filter 700ms ease,
+    box-shadow 900ms cubic-bezier(0.19, 1, 0.22, 1);
   will-change: transform, opacity;
   overflow: hidden;
   box-shadow:
     0 1px 0 rgba(255,250,235,0.06) inset,
     0 30px 80px -30px rgba(0,0,0,0.65),
     0 8px 24px -10px rgba(0,0,0,0.4);
+}
+
+.page > .page-turn-shadow,
+.page > .page-curl {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 20;
+}
+
+.page > .page-turn-shadow {
+  background:
+    linear-gradient(90deg, rgba(0,0,0,0.34), rgba(0,0,0,0.08) 28%, transparent 58%),
+    radial-gradient(ellipse at 0% 50%, rgba(0,0,0,0.18), transparent 56%);
+  mix-blend-mode: multiply;
+}
+
+.page > .page-curl {
+  left: auto;
+  width: min(26%, 240px);
+  background:
+    linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 38%, rgba(0,0,0,0.22) 100%),
+    linear-gradient(180deg, rgba(255,255,255,0.12), transparent 18%, transparent 82%, rgba(0,0,0,0.12));
+  transform-origin: 100% 50%;
+  filter: blur(0.2px);
 }
 
 /* Falz / fold edge */
@@ -169,17 +209,25 @@ button:focus-visible, a:focus-visible {
   pointer-events: auto;
 }
 .page.is-next {
-  transform: translate3d(0, 0, -900px) rotateY(6deg) scale(0.86);
+  transform: translate3d(5%, 0, -760px) rotateY(7deg) scale(0.88);
   opacity: 0;
   z-index: 1;
   pointer-events: none;
 }
 .page.is-prev {
-  transform: translate3d(-12%, 0, 240px) rotateY(-46deg) scale(0.92);
+  transform: translate3d(-15%, 0, 260px) rotateY(-52deg) scale(0.91);
   opacity: 0;
   z-index: 2;
   pointer-events: none;
-  filter: brightness(0.85);
+  filter: brightness(0.84) saturate(0.92);
+}
+.page.is-adjacent-next {
+  transform: translate3d(3.5%, 0, -320px) rotateY(4deg) scale(0.96);
+  opacity: 0.18;
+  filter: brightness(0.92);
+}
+.page.is-adjacent-prev {
+  opacity: 0.08;
 }
 .page.is-far {
   transform: translate3d(0, 0, -1400px) scale(0.7);
@@ -194,6 +242,54 @@ button:focus-visible, a:focus-visible {
   opacity: 0;
 }
 
+.app-shell.is-turning-forward .page.is-adjacent-prev {
+  animation: softPageTurnForward 1180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  box-shadow: 36px 24px 90px -38px rgba(0,0,0,0.62);
+  z-index: 9;
+}
+.app-shell.is-turning-backward .page.is-active {
+  animation: softPageTurnBackward 1180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  box-shadow: -32px 24px 90px -38px rgba(0,0,0,0.58);
+  z-index: 9;
+}
+.app-shell.is-turning-forward .page.is-adjacent-prev > .page-turn-shadow,
+.app-shell.is-turning-backward .page.is-active > .page-turn-shadow {
+  animation: pageShadeSweep 1180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.app-shell.is-turning-forward .page.is-adjacent-prev > .page-curl,
+.app-shell.is-turning-backward .page.is-active > .page-curl {
+  animation: pageCurlSweep 1180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.app-shell.is-turning-forward .page.is-active {
+  animation: pageSettle 780ms 120ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes softPageTurnForward {
+  0%   { opacity: 1; transform: translate3d(0, 0, 18px) rotateY(0deg) scale(1); filter: brightness(1); }
+  38%  { opacity: 0.98; transform: translate3d(-7%, 0, 170px) rotateY(-28deg) scale(0.985); filter: brightness(0.96); }
+  100% { opacity: 0; transform: translate3d(-18%, 0, 300px) rotateY(-64deg) scale(0.9); filter: brightness(0.82); }
+}
+@keyframes softPageTurnBackward {
+  0%   { opacity: 0; transform: translate3d(-18%, 0, 300px) rotateY(-64deg) scale(0.9); filter: brightness(0.82); }
+  54%  { opacity: 0.96; transform: translate3d(-5%, 0, 160px) rotateY(-24deg) scale(0.985); filter: brightness(0.96); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) rotateY(0deg) scale(1); filter: brightness(1); }
+}
+@keyframes pageShadeSweep {
+  0%, 100% { opacity: 0; }
+  34% { opacity: 0.38; }
+  62% { opacity: 0.2; }
+}
+@keyframes pageCurlSweep {
+  0% { opacity: 0; transform: scaleX(0.72) skewY(0deg); }
+  30% { opacity: 0.62; transform: scaleX(1.02) skewY(-1.8deg); }
+  66% { opacity: 0.34; transform: scaleX(0.82) skewY(1.2deg); }
+  100% { opacity: 0; transform: scaleX(0.58) skewY(0deg); }
+}
+@keyframes pageSettle {
+  from { transform: translate3d(1.5%, 0, -28px) rotateY(1.2deg) scale(0.995); }
+  to   { transform: translate3d(0, 0, 0) rotateY(0) scale(1); }
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .page {
@@ -205,6 +301,15 @@ button:focus-visible, a:focus-visible {
   }
   .page.is-active {
     transform: none;
+  }
+  .app-shell.is-turning-forward .page.is-adjacent-prev,
+  .app-shell.is-turning-backward .page.is-active,
+  .app-shell.is-turning-forward .page.is-active,
+  .app-shell.is-turning-forward .page.is-adjacent-prev > .page-turn-shadow,
+  .app-shell.is-turning-backward .page.is-active > .page-turn-shadow,
+  .app-shell.is-turning-forward .page.is-adjacent-prev > .page-curl,
+  .app-shell.is-turning-backward .page.is-active > .page-curl {
+    animation: none;
   }
 }
 
@@ -356,10 +461,22 @@ button:focus-visible, a:focus-visible {
   border-color: rgba(241,235,221,0.45);
   background: rgba(241,235,221,0.06);
 }
+.nav-hud button:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+  color: rgba(241,235,221,0.38);
+  border-color: rgba(241,235,221,0.08);
+  background: transparent;
+}
 .nav-hud button.primary {
   color: var(--paper);
   border-color: var(--accent-warm);
   background: rgba(138,109,59,0.12);
+}
+.nav-hud button.primary:disabled {
+  color: rgba(241,235,221,0.38);
+  border-color: rgba(241,235,221,0.08);
+  background: transparent;
 }
 .nav-hud .progress {
   flex: 1;
@@ -834,7 +951,9 @@ button:focus-visible, a:focus-visible {
   .magazine-stage { inset: 48px 12px 40px 12px; perspective: 1400px; }
   .status-bar { top: 22px; left: 16px; right: 16px; font-size: 9px; }
   .status-bar .hide-sm { display: none; }
-  .nav-hud { bottom: 12px; left: 16px; right: 16px; }
+  .nav-hud { bottom: 12px; left: 16px; right: 16px; height: auto; gap: 8px; }
+  .nav-hud .group { gap: 6px; flex-wrap: wrap; }
+  .nav-hud button { padding: 6px 8px; font-size: 9px; }
   .page-grid { padding: 14px; gap: 8px; }
   .haltung-cards, .process-band { grid-template-columns: 1fr 1fr; }
   .proj-grid { grid-template-columns: 1fr; grid-template-rows: repeat(4, 1fr); }
